@@ -1,0 +1,93 @@
+:root {
+  color-scheme: light dark;
+  --bg: #ffffff;
+  --fg: #1c1b22;
+  --muted: #5b5b66;
+  --line: #d7d7db;
+  --accent: #6d3fc4;
+  --ok: #1a7f37;
+  --bad: #c62828;
+  --field: #f4f4f6;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1c1b22;
+    --fg: #f1f1f4;
+    --muted: #a9a9b3;
+    --line: #3a3944;
+    --accent: #b497f5;
+    --ok: #57c476;
+    --bad: #ff8a80;
+    --field: #2b2a33;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+h1 { font-size: 16px; margin: 0; }
+h2 {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 16px 0 6px;
+}
+a { color: var(--accent); }
+.muted { color: var(--muted); }
+.ok { color: var(--ok); }
+.bad { color: var(--bad); }
+.small { font-size: 12px; }
+button {
+  font: inherit;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--field);
+  color: var(--fg);
+  cursor: pointer;
+}
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+button:disabled { opacity: 0.55; cursor: default; }
+input[type="text"], input[type="password"], input[type="number"] {
+  font: inherit;
+  width: 100%;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--field);
+  color: var(--fg);
+}
+
+/* popup */
+body.popup { width: 340px; padding: 12px 14px 14px; }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.card { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; margin-bottom: 6px; }
+.title { font-weight: 600; overflow-wrap: anywhere; }
+ul.recent { list-style: none; margin: 0; padding: 0; }
+ul.recent li { padding: 5px 0; border-top: 1px solid var(--line); overflow-wrap: anywhere; }
+ul.recent li:first-child { border-top: 0; }
+details { margin-top: 12px; }
+pre {
+  margin: 6px 0 0;
+  padding: 8px;
+  background: var(--field);
+  border-radius: 6px;
+  font-size: 11px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 180px;
+  overflow: auto;
+}
+
+/* options */
+body.options { max-width: 620px; margin: 0 auto; padding: 28px 20px 48px; }
+body.options h1 { font-size: 22px; margin-bottom: 4px; }
+label { display: block; margin: 12px 0 4px; font-weight: 600; }
+ol { padding-left: 20px; }
+ol li { margin-bottom: 6px; }
+.actions { display: flex; gap: 8px; align-items: center; margin-top: 14px; flex-wrap: wrap; }
+.narrow { max-width: 120px; }

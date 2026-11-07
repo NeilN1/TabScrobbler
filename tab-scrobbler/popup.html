@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Tab Scrobbler</title>
+  <link rel="stylesheet" href="ui.css">
+</head>
+<body class="popup">
+  <div class="row">
+    <h1>Tab Scrobbler</h1>
+    <label class="small" style="margin:0;font-weight:400">
+      <input type="checkbox" id="enabled"> Scrobbling on
+    </label>
+  </div>
+  <div id="account" class="small muted" style="margin-top:4px"></div>
+  <div id="error" class="small bad"></div>
+
+  <h2>Player tabs</h2>
+  <div id="players"></div>
+
+  <h2>Recent scrobbles</h2>
+  <ul id="recent" class="recent small"></ul>
+
+  <details>
+    <summary class="small muted">What the page reports</summary>
+    <pre id="raw"></pre>
+  </details>
+
+  <script src="popup.js"></script>
+</body>
+</html>

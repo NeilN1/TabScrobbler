@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Tab Scrobbler settings</title>
+  <link rel="stylesheet" href="ui.css">
+</head>
+<body class="options">
+  <h1>Tab Scrobbler</h1>
+  <p class="muted">Scrobbles what you play in the SiriusXM and Apple Music web players to Last.fm.</p>
+
+  <h2>Last.fm account</h2>
+  <p id="account"></p>
+
+  <div id="setup">
+    <ol>
+      <li>
+        Create a free Last.fm API account at
+        <a href="https://www.last.fm/api/account/create" target="_blank" rel="noopener">last.fm/api/account/create</a>.
+        Any application name works; leave the callback URL empty.
+      </li>
+      <li>Paste the API key and shared secret it gives you below.</li>
+      <li>Click Connect and approve access in the Last.fm tab that opens.</li>
+    </ol>
+
+    <label for="apiKey">API key</label>
+    <input type="text" id="apiKey" autocomplete="off" spellcheck="false">
+
+    <label for="apiSecret">Shared secret</label>
+    <input type="password" id="apiSecret" autocomplete="off" spellcheck="false">
+  </div>
+
+  <div class="actions">
+    <button id="connect" class="primary">Connect to Last.fm</button>
+    <button id="disconnect" hidden>Disconnect</button>
+    <span id="status" class="small"></span>
+  </div>
+
+  <h2>Radio and other tracks with no known length</h2>
+  <label for="unknownSeconds">Scrobble after this many seconds of listening</label>
+  <input type="number" id="unknownSeconds" class="narrow" min="30" max="240" step="5">
+  <p class="small muted">
+    SiriusXM does not say how long a song is, so a track counts once you have listened this long (30&ndash;240).
+    Apple Music tracks use the usual Last.fm rule: half the track or four minutes, whichever comes first.
+  </p>
+
+  <p class="small muted">
+    Your API key, secret and Last.fm session are stored only in this browser profile, and track details are sent
+    only to Last.fm.
+  </p>
+
+  <script src="md5.js"></script>
+  <script src="lastfm.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>

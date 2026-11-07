@@ -1,0 +1,72 @@
+{
+  "manifest_version": 3,
+  "name": "Tab Scrobbler",
+  "version": "1.0.0",
+  "description": "Scrobbles tracks played in the SiriusXM and Apple Music web players to Last.fm.",
+  "icons": {
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "permissions": ["storage", "alarms"],
+  "host_permissions": [
+    "https://ws.audioscrobbler.com/*",
+    "https://music.apple.com/*",
+    "https://beta.music.apple.com/*",
+    "https://classical.music.apple.com/*",
+    "https://*.siriusxm.com/*",
+    "https://*.siriusxm.ca/*"
+  ],
+  "background": {
+    "scripts": ["md5.js", "lastfm.js", "background.js"],
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Tab Scrobbler",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    }
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://music.apple.com/*",
+        "https://beta.music.apple.com/*",
+        "https://classical.music.apple.com/*",
+        "https://*.siriusxm.com/*",
+        "https://*.siriusxm.ca/*"
+      ],
+      "js": ["page.js"],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
+    {
+      "matches": [
+        "https://music.apple.com/*",
+        "https://beta.music.apple.com/*",
+        "https://classical.music.apple.com/*",
+        "https://*.siriusxm.com/*",
+        "https://*.siriusxm.ca/*"
+      ],
+      "js": ["tracker.js", "content.js"],
+      "run_at": "document_start"
+    }
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "tab-scrobbler@localhost",
+      "strict_min_version": "140.0",
+      "data_collection_permissions": {
+        "required": ["websiteContent"]
+      }
+    },
+    "gecko_android": {
+      "strict_min_version": "142.0"
+    }
+  }
+}
