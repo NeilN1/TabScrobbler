@@ -101,7 +101,17 @@
       if (snap.duration > 0) c.track.duration = snap.duration;
 
       if (snap.playing) {
-        if (c.wasPlaying) c.playedMs += Math.min(Math.max(now - c.lastTick, 0), MAX_TICK_MS);
+        const wallMs = Math.max(now - c.lastTick, 0);
+        // Wall-clock time while playing, capped so a throttled or sleeping
+        // tab cannot over-count...
+        let inc = c.wasPlaying ? Math.min(wallMs, MAX_TICK_MS) : 0;
+        // ...and the player's own clock, which is exact however rarely we get
+        // to look at it. A jump bigger than the time elapsed is a seek.
+        if (snap.position !== null && c.lastPosition !== null) {
+          const posMs = (snap.position - c.lastPosition) * 1000;
+          if (posMs > 0) inc = Math.max(inc, Math.min(posMs, wallMs + 2000));
+        }
+        c.playedMs += inc;
         if (!c.startedAt) c.startedAt = Math.floor(now / 1000);
         if (!c.nowPlayingAt || (!c.wasPlaying && now - c.nowPlayingAt > 60000)) {
           c.nowPlayingAt = now;

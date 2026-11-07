@@ -216,6 +216,32 @@ const radio = (over) => ({ site: 'siriusxm', artist: 'Wilco', title: 'Jesus, Etc
     assert.equal(cleanSnapshot(song({ artist: 'will.i.am', title: '#thatPOWER' })).title, '#thatPOWER', 'Apple Music is not filtered');
   });
 
+  await test('throttled ticks: the player clock fills in the gaps', () => {
+    const h = harness();
+    // Two looks 120 seconds apart, as a heavily throttled background tab
+    // might allow. Wall-clock alone would credit at most about a minute.
+    h.play(song({ position: 0 }), 1);
+    h.skip(119_000);
+    assert.equal(h.scrobbles().length, 0);
+    h.play(song({ position: 120 }), 1);
+    assert.equal(h.scrobbles().length, 1);
+  });
+
+  await test('a stalled player clock still counts wall-clock listening', () => {
+    const h = harness();
+    h.play(song({ position: 10 }), 10);
+    for (let i = 0; i < 100; i++) h.play({ ...song(), position: 20 }, 1);
+    assert.equal(h.scrobbles().length, 1);
+  });
+
+  await test('seeking forward does not count the skipped part', () => {
+    const h = harness();
+    h.play(song(), 20);
+    h.play(song({ position: 150 }), 20);
+    assert.equal(h.scrobbles().length, 0);
+    assert.ok(h.tracker.state().playedSeconds < 50, 'got ' + h.tracker.state().playedSeconds);
+  });
+
   await test('a sleep/wake gap counts for at most about a minute', () => {
     const h = harness();
     h.play(song({ duration: 400 }), 10);

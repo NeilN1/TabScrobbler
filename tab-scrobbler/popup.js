@@ -70,6 +70,9 @@
           );
         }
         card.append(line);
+        if (s.staleSeconds > 5) {
+          card.append(el('div', 'small bad', 'The page stopped reporting ' + s.staleSeconds + 's ago'));
+        }
       } else {
         const shown = [raw.artist, raw.title].filter(Boolean).join(' — ');
         card.append(el('div', 'small', raw.note || (shown ? 'Not treated as a song: ' + shown : 'Nothing playing')));

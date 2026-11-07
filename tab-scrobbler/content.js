@@ -11,6 +11,7 @@
   let unknownSeconds = 60;
   let lastSnap = null;
   let lastClean = null;
+  let lastSnapAt = 0;
 
   function send(msg) {
     try {
@@ -30,6 +31,7 @@
   window.addEventListener('message', (e) => {
     if (e.source !== window || !e.data || e.data.__tabScrobbler !== true) return;
     lastSnap = e.data.snap || null;
+    lastSnapAt = Date.now();
     lastClean = cleanSnapshot(lastSnap);
     tracker.update(lastClean, Date.now());
   });
@@ -39,7 +41,12 @@
   api.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     if (msg && msg.type === 'getState') {
       const isSong = Boolean(lastClean && lastClean.artist && lastClean.title);
-      sendResponse({ site: lastSnap && lastSnap.site, raw: lastSnap, state: isSong ? tracker.state() : null });
+      sendResponse({
+        site: lastSnap && lastSnap.site,
+        raw: lastSnap,
+        state: isSong ? tracker.state() : null,
+        staleSeconds: lastSnapAt ? Math.round((Date.now() - lastSnapAt) / 1000) : null,
+      });
     }
   });
 

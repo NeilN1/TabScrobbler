@@ -56,6 +56,9 @@ each player tab is reporting, how close the current track is to being scrobbled,
   settings). Lines that look like promos, social handles or phone numbers are skipped.
 - Paused time never counts. If Last.fm is unreachable, scrobbles wait in a queue and are retried every five minutes
   for up to two weeks.
+- The SiriusXM player stops refreshing its now-playing display while its tab is hidden, so on SiriusXM pages the
+  extension makes the page believe the tab is always visible (it reports `document.hidden` as false, keeps
+  `visibilitychange` from reaching the page, and runs animation-frame callbacks on a timer while hidden).
 
 ## Known limits
 
