@@ -1,4 +1,5 @@
-# web-ext build and sign output
+# web-ext build and sign output, and its per-account upload cache
 web-ext-artifacts/
+tab-scrobbler/.amo-upload-uuid
 # npx cache if a package.json is ever added
 node_modules/

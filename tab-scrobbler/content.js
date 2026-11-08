@@ -8,6 +8,10 @@
   const api = globalThis.browser ?? globalThis.chrome;
   const { Tracker, cleanSnapshot } = globalThis.TabScrobbler;
 
+  // Decided here, not taken from the page's message, so a script on one site
+  // cannot pose as the other to dodge its filtering.
+  const SITE = /(^|\.)music\.apple\.com$/.test(location.hostname) ? 'apple' : 'siriusxm';
+
   let unknownSeconds = 60;
   let lastSnap = null;
   let lastClean = null;
@@ -24,13 +28,13 @@
 
   const tracker = new Tracker({
     onNowPlaying: (track) => send({ type: 'nowPlaying', track }),
-    onScrobble: (track, timestamp) => send({ type: 'scrobble', track, timestamp, site: lastSnap && lastSnap.site }),
+    onScrobble: (track, timestamp) => send({ type: 'scrobble', track, timestamp, site: SITE }),
     unknownSeconds: () => unknownSeconds,
   });
 
   window.addEventListener('message', (e) => {
     if (e.source !== window || !e.data || e.data.__tabScrobbler !== true) return;
-    lastSnap = e.data.snap || null;
+    lastSnap = e.data.snap && typeof e.data.snap === 'object' ? { ...e.data.snap, site: SITE } : null;
     lastSnapAt = Date.now();
     lastClean = cleanSnapshot(lastSnap);
     tracker.update(lastClean, Date.now());
@@ -42,7 +46,7 @@
     if (msg && msg.type === 'getState') {
       const isSong = Boolean(lastClean && lastClean.artist && lastClean.title);
       sendResponse({
-        site: lastSnap && lastSnap.site,
+        site: SITE,
         raw: lastSnap,
         state: isSong ? tracker.state() : null,
         staleSeconds: lastSnapAt ? Math.round((Date.now() - lastSnapAt) / 1000) : null,

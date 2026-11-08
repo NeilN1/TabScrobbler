@@ -66,9 +66,24 @@ if (typeof importScripts === 'function') importScripts('md5.js', 'lastfm.js');
     }
 
     await api.storage.local.set({ queue, recent });
-    if (queue.length) api.alarms.create('flush', { delayInMinutes: 5 });
+    // Retry later only when a retry can do something; a missing session is
+    // fixed by the user reconnecting, which flushes.
+    if (queue.length && cfg.connected) api.alarms.create('flush', { delayInMinutes: 5 });
     else api.alarms.clear('flush');
   }
+
+  // Only this extension's content scripts can send these, but check the shape
+  // anyway so a bad entry can never wedge the queue or the popup.
+  function validTrack(t) {
+    if (!t || typeof t !== 'object') return null;
+    const str = (v) => (typeof v === 'string' ? v.slice(0, 300) : '');
+    const track = { artist: str(t.artist), title: str(t.title), album: str(t.album) };
+    if (!track.artist || !track.title) return null;
+    track.duration = Number.isFinite(t.duration) && t.duration > 0 ? t.duration : 0;
+    return track;
+  }
+
+  let lastNowPlayingAt = 0;
 
   async function handle(msg) {
     if (!msg || typeof msg.type !== 'string') return null;
@@ -80,11 +95,15 @@ if (typeof importScripts === 'function') importScripts('md5.js', 'lastfm.js');
 
     const cfg = await getCfg();
     if (!cfg.enabled) return { ok: false };
+    const track = validTrack(msg.track);
+    if (!track) return { ok: false };
 
     if (msg.type === 'nowPlaying') {
       if (!cfg.connected) return { ok: false };
+      if (Date.now() - lastNowPlayingAt < 10000) return { ok: false };
+      lastNowPlayingAt = Date.now();
       try {
-        await LastFm.updateNowPlaying(cfg, msg.track);
+        await LastFm.updateNowPlaying(cfg, track);
       } catch (err) {
         // Now-playing is cosmetic; only credential problems are worth keeping.
         if (err.blocking) await noteError(err);
@@ -94,7 +113,8 @@ if (typeof importScripts === 'function') importScripts('md5.js', 'lastfm.js');
     }
 
     if (msg.type === 'scrobble') {
-      await serial(() => enqueue({ track: msg.track, timestamp: msg.timestamp, site: msg.site }));
+      const timestamp = Number.isInteger(msg.timestamp) ? msg.timestamp : Math.floor(Date.now() / 1000);
+      await serial(() => enqueue({ track, timestamp, site: msg.site === 'apple' ? 'apple' : 'siriusxm' }));
       await serial(flush);
       return { ok: true };
     }

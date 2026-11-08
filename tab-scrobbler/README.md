@@ -16,14 +16,20 @@ Firefox only keeps unsigned extensions until it restarts, so there are two route
 
 **Keep it installed** — have Mozilla sign it for private use (free, automated, takes a minute or two):
 
-1. Sign in at <https://addons.mozilla.org/developers/addon/api/key/> and generate API credentials.
-2. From this folder run:
+1. Sign in at <https://addons.mozilla.org/developers/addon/api/key/> and generate API credentials
+   (a *JWT issuer* that looks like `user:12345678:987`, and a *JWT secret*).
+2. Store them once, encrypted to your Windows account (username = issuer, password = secret):
 
-   ```bash
-   npx web-ext sign --channel=unlisted --api-key=YOUR_JWT_ISSUER --api-secret=YOUR_JWT_SECRET
+   ```powershell
+   Get-Credential -Message "Mozilla add-ons API" | Export-Clixml "$env:USERPROFILE\.web-ext-amo.xml"
    ```
 
-3. Open the `.xpi` it writes to `web-ext-artifacts/` in Firefox.
+3. Bump `"version"` in `manifest.json` (Mozilla will not sign the same version twice), then from the
+   repository root run `.\sign.ps1`. It hands the credentials to `web-ext` only for that command.
+   On other platforms, put them in the `WEB_EXT_API_KEY` and `WEB_EXT_API_SECRET` environment variables
+   and run `npx web-ext sign --channel=unlisted` from this folder; avoid passing the secret on the command
+   line, where shell history keeps it.
+4. Open the `.xpi` it writes to `web-ext-artifacts/` in Firefox.
 
 If nothing is detected after installing, check `about:addons` → Tab Scrobbler → **Permissions** and make sure
 access to the Apple Music and SiriusXM sites is switched on.
@@ -79,3 +85,7 @@ each player tab is reporting, how close the current track is to being scrobbled,
 | `popup.*`, `options.*`, `ui.css` | Toolbar popup and settings page |
 
 Tests for the signing and timing logic live in `../tests/run.js` (`node tests/run.js` from the parent folder).
+
+## License
+
+MIT — see `../LICENSE`.

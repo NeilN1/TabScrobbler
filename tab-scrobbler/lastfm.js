@@ -57,7 +57,9 @@
       throw new LastFmError(data.message || 'Last.fm error ' + data.error, Number(data.error));
     }
     if (!resp.ok || !data) {
-      throw new LastFmError('Last.fm returned HTTP ' + resp.status, resp.status >= 500 ? -1 : -2);
+      // Non-JSON (captive portal, proxy page), 429 and 5xx are transient.
+      const transient = !data || resp.status === 429 || resp.status >= 500;
+      throw new LastFmError('Last.fm returned HTTP ' + resp.status, transient ? -1 : -2);
     }
     return data;
   }

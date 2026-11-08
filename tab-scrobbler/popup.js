@@ -84,14 +84,18 @@
   function renderRecent(recent, queue) {
     const list = $('recent');
     list.replaceChildren();
+    const label = (item) => {
+      const t = (item && item.track) || {};
+      return (t.artist || '?') + ' — ' + (t.title || '?');
+    };
     for (const q of queue.slice().reverse()) {
       const li = el('li');
-      li.append(el('span', '', q.track.artist + ' — ' + q.track.title), el('span', 'muted', '  waiting to send'));
+      li.append(el('span', '', label(q)), el('span', 'muted', '  waiting to send'));
       list.append(li);
     }
     for (const r of recent) {
       const li = el('li');
-      li.append(el('span', '', r.track.artist + ' — ' + r.track.title));
+      li.append(el('span', '', label(r)));
       const when = new Date(r.timestamp * 1000).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
       if (r.status === 'scrobbled') li.append(el('span', 'muted', '  ' + when));
       else li.append(el('span', 'bad', '  ' + r.status + (r.note ? ': ' + r.note : '')));
@@ -101,7 +105,7 @@
   }
 
   async function render() {
-    const s = await api.storage.local.get(['apiKey', 'sessionKey', 'username', 'enabled', 'queue', 'recent', 'lastError']);
+    const s = await api.storage.local.get(['sessionKey', 'username', 'enabled', 'queue', 'recent', 'lastError']);
     $('enabled').checked = s.enabled !== false;
 
     const account = $('account');

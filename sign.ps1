@@ -35,7 +35,9 @@ $env:WEB_EXT_API_KEY = $cred.UserName
 $env:WEB_EXT_API_SECRET = $cred.GetNetworkCredential().Password
 try {
     Push-Location (Join-Path $PSScriptRoot 'tab-scrobbler')
-    npx --yes web-ext sign --channel=unlisted
+    # Pinned: this process holds the signing secret, so run a known release
+    # rather than whatever npm serves today. Bump deliberately.
+    npx --yes web-ext@10.8.0 sign --channel=unlisted
     if ($LASTEXITCODE -ne 0) { throw "web-ext sign exited with code $LASTEXITCODE" }
 }
 finally {

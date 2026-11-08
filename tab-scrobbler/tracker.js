@@ -16,8 +16,10 @@
   // between songs and on talk channels.
   const JUNK = /@|#(?!\d)|\.com\b|\.ca\b|facebook|twitter|instagram|siriusxm|1-8\d\d-/i;
 
+  // Page-supplied strings are capped: Last.fm has no use for longer values
+  // and a misbehaving page should not be able to bloat storage or requests.
   function tidy(s) {
-    return typeof s === 'string' ? s.replace(/\s+/g, ' ').trim() : '';
+    return typeof s === 'string' ? s.replace(/\s+/g, ' ').trim().slice(0, 300) : '';
   }
 
   // Normalises a raw snapshot from page.js. Artist and title come back empty

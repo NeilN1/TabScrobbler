@@ -109,6 +109,7 @@
 
   // "ROSÉ/Bruno Mars - APT.ROSÉ/Bruno Mars - APT." -> "ROSÉ/Bruno Mars - APT."
   function undouble(s) {
+    if (s.length > 500) return s; // the backreference match is quadratic
     const m = /^(.+?)\s*(?:[•·|]\s*)?\1$/.exec(s);
     return m ? m[1] : s;
   }
