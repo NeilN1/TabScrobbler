@@ -3,6 +3,8 @@
 Scrobbles what you play in the SiriusXM and Apple Music web players to Last.fm.
 The same folder loads in Firefox (140+) and in Chrome or Edge.
 
+Source: <https://github.com/NeilN1/TabScrobbler>
+
 ## Install
 
 ### Firefox

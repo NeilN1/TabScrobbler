@@ -1,8 +1,9 @@
 {
   "manifest_version": 3,
   "name": "Tab Scrobbler",
-  "version": "1.0.2",
-  "description": "Scrobbles tracks played in the SiriusXM and Apple Music web players to Last.fm.",
+  "version": "1.0.3",
+  "description": "Scrobbles tracks played in the SiriusXM and Apple Music web players to Last.fm. Source: github.com/NeilN1/TabScrobbler",
+  "homepage_url": "https://github.com/NeilN1/TabScrobbler",
   "icons": {
     "48": "icons/icon-48.png",
     "128": "icons/icon-128.png"
