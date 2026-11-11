@@ -45,14 +45,19 @@ Chrome shows a harmless warning about the `browser_specific_settings` key, which
 
 ## Connect Last.fm
 
-The settings page opens on first install (later: toolbar icon → **Settings**).
-
-1. Create a free API account at <https://www.last.fm/api/account/create>. Any name works; leave the callback URL empty.
-2. Paste the **API key** and **shared secret** into the settings page.
-3. Click **Connect to Last.fm** and approve access in the tab that opens.
+The settings page opens on first install (later: toolbar icon → **Settings**). Click **Connect to Last.fm**,
+approve access in the tab that opens, and you're done.
 
 Reload any SiriusXM or Apple Music tab that was already open, then play something. The toolbar popup shows what
 each player tab is reporting, how close the current track is to being scrobbled, and the most recent scrobbles.
+
+### Building from source
+
+Last.fm has no public-client auth flow: an application's API key *and* shared secret are needed to sign the
+authorization handshake, so they ship inside the extension, as with every open-source scrobbler. Release builds
+carry this project's own key in `config.js`. If you build your own, register an application at
+<https://www.last.fm/api/account/create> and put its values in `config.js`; the shared secret only identifies
+the application, never a user.
 
 ## How it decides
 
@@ -84,6 +89,7 @@ each player tab is reporting, how close the current track is to being scrobbled,
 | `content.js` | Connects the two above to the background script |
 | `background.js` | Sends now-playing and scrobbles to Last.fm; owns the retry queue |
 | `lastfm.js`, `md5.js` | Last.fm API client and the MD5 it needs for request signing |
+| `config.js` | The Last.fm application key and secret this build signs with |
 | `popup.*`, `options.*`, `ui.css` | Toolbar popup and settings page |
 
 Tests for the signing and timing logic live in `../tests/run.js` (`node tests/run.js` from the parent folder).

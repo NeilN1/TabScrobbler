@@ -11,24 +11,10 @@
 
   <h2>Last.fm account</h2>
   <p id="account"></p>
-
-  <div id="setup">
-    <ol>
-      <li>
-        Create a free Last.fm API account at
-        <a href="https://www.last.fm/api/account/create" target="_blank" rel="noopener">last.fm/api/account/create</a>.
-        Any application name works; leave the callback URL empty.
-      </li>
-      <li>Paste the API key and shared secret it gives you below.</li>
-      <li>Click Connect and approve access in the Last.fm tab that opens.</li>
-    </ol>
-
-    <label for="apiKey">API key</label>
-    <input type="text" id="apiKey" autocomplete="off" spellcheck="false">
-
-    <label for="apiSecret">Shared secret</label>
-    <input type="password" id="apiSecret" autocomplete="off" spellcheck="false">
-  </div>
+  <p id="setup" class="small muted">
+    Click Connect, approve access on the Last.fm page that opens, and come back here.
+    You can revoke access at any time under Last.fm &rarr; Settings &rarr; Applications.
+  </p>
 
   <div class="actions">
     <button id="connect" class="primary">Connect to Last.fm</button>
@@ -45,10 +31,10 @@
   </p>
 
   <p class="small muted">
-    Your API key, secret and Last.fm session are stored only in this browser profile, and track details are sent
-    only to Last.fm.
+    Your Last.fm session is stored only in this browser profile, and track details are sent only to Last.fm.
   </p>
 
+  <script src="config.js"></script>
   <script src="md5.js"></script>
   <script src="lastfm.js"></script>
   <script src="options.js"></script>

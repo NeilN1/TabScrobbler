@@ -3,6 +3,8 @@
 (() => {
   const api = globalThis.browser ?? globalThis.chrome;
   const LastFm = globalThis.LastFm;
+  const CONFIG = globalThis.TabScrobblerConfig || {};
+  const configured = Boolean(CONFIG.apiKey && CONFIG.apiSecret && !/PASTE_/.test(CONFIG.apiKey + CONFIG.apiSecret));
   const store = api.storage.local;
   const $ = (id) => document.getElementById(id);
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -14,31 +16,31 @@
   }
 
   async function render() {
-    const s = await store.get(['apiKey', 'apiSecret', 'sessionKey', 'username', 'unknownSeconds']);
+    const s = await store.get(['sessionKey', 'username', 'unknownSeconds']);
     const connected = Boolean(s.sessionKey);
-    $('account').textContent = connected ? 'Connected as ' + (s.username || 'unknown') + '.' : 'Not connected.';
-    $('account').className = connected ? 'ok' : 'muted';
-    $('setup').hidden = connected;
+    const account = $('account');
+    if (!configured) {
+      account.textContent = 'This build has no Last.fm application key (see config.js), so it cannot connect.';
+      account.className = 'bad';
+    } else {
+      account.textContent = connected ? 'Connected as ' + (s.username || 'unknown') + '.' : 'Not connected.';
+      account.className = connected ? 'ok' : 'muted';
+    }
+    $('setup').hidden = connected || !configured;
     $('connect').hidden = connected;
+    $('connect').disabled = !configured;
     $('disconnect').hidden = !connected;
-    if (document.activeElement !== $('apiKey')) $('apiKey').value = s.apiKey || '';
-    if (document.activeElement !== $('apiSecret')) $('apiSecret').value = s.apiSecret || '';
     if (document.activeElement !== $('unknownSeconds')) $('unknownSeconds').value = s.unknownSeconds || 60;
   }
 
   async function connect() {
-    const cfg = { apiKey: $('apiKey').value.trim(), apiSecret: $('apiSecret').value.trim() };
-    if (!cfg.apiKey || !cfg.apiSecret) {
-      status('Enter both the API key and the shared secret.', 'bad');
-      return;
-    }
+    const cfg = { apiKey: CONFIG.apiKey, apiSecret: CONFIG.apiSecret };
     $('connect').disabled = true;
     try {
-      await store.set(cfg);
-      status('Contacting Last.fm…');
+      status('Contacting Last.fm\u2026');
       const token = await LastFm.getToken(cfg);
       await api.tabs.create({ url: LastFm.authUrl(cfg, token) });
-      status('Approve access in the Last.fm tab that just opened. Waiting…');
+      status('Approve access in the Last.fm tab that just opened. Waiting\u2026');
 
       const deadline = Date.now() + 180000;
       while (Date.now() < deadline) {
@@ -59,13 +61,13 @@
     } catch (err) {
       status(err.message, 'bad');
     } finally {
-      $('connect').disabled = false;
+      $('connect').disabled = !configured;
     }
   }
 
   async function disconnect() {
     await store.remove(['sessionKey', 'username', 'lastError']);
-    status('Disconnected. To revoke access entirely, remove the application under Last.fm → Settings → Applications.');
+    status('Disconnected. To revoke access entirely, remove the application under Last.fm \u2192 Settings \u2192 Applications.');
     await render();
   }
 

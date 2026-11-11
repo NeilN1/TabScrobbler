@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Tab Scrobbler",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Scrobbles tracks played in the SiriusXM and Apple Music web players to Last.fm. Source: github.com/NeilN1/TabScrobbler",
   "homepage_url": "https://github.com/NeilN1/TabScrobbler",
   "icons": {
@@ -18,7 +18,7 @@
     "https://*.siriusxm.ca/*"
   ],
   "background": {
-    "scripts": ["md5.js", "lastfm.js", "background.js"],
+    "scripts": ["config.js", "md5.js", "lastfm.js", "background.js"],
     "service_worker": "background.js"
   },
   "action": {

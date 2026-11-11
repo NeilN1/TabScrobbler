@@ -5,19 +5,28 @@
 
 // Chrome loads this file alone as a service worker; Firefox loads md5.js and
 // lastfm.js first through the manifest's background.scripts list.
-if (typeof importScripts === 'function') importScripts('md5.js', 'lastfm.js');
+if (typeof importScripts === 'function') importScripts('config.js', 'md5.js', 'lastfm.js');
 
 (() => {
   const api = globalThis.browser ?? globalThis.chrome;
   const LastFm = globalThis.LastFm;
+  const CONFIG = globalThis.TabScrobblerConfig || {};
+  const configured = Boolean(CONFIG.apiKey && CONFIG.apiSecret && !/PASTE_/.test(CONFIG.apiKey + CONFIG.apiSecret));
 
   const MAX_QUEUE = 500;
   const MAX_RECENT = 20;
   const MAX_AGE_SECONDS = 14 * 86400; // Last.fm rejects older scrobbles.
 
+  // The application key ships in config.js; only the user's session is stored.
   async function getCfg() {
-    const s = await api.storage.local.get(['apiKey', 'apiSecret', 'sessionKey', 'enabled']);
-    return { ...s, enabled: s.enabled !== false, connected: Boolean(s.apiKey && s.apiSecret && s.sessionKey) };
+    const s = await api.storage.local.get(['sessionKey', 'enabled']);
+    return {
+      apiKey: CONFIG.apiKey,
+      apiSecret: CONFIG.apiSecret,
+      sessionKey: s.sessionKey,
+      enabled: s.enabled !== false,
+      connected: configured && Boolean(s.sessionKey),
+    };
   }
 
   // Queue reads and writes must not interleave.
@@ -133,6 +142,8 @@ if (typeof importScripts === 'function') importScripts('md5.js', 'lastfm.js');
   });
 
   api.runtime.onInstalled.addListener((details) => {
+    // Builds before 1.0.4 kept a user-supplied API key and secret in storage.
+    api.storage.local.remove(['apiKey', 'apiSecret']);
     if (details.reason === 'install') api.runtime.openOptionsPage();
   });
 })();
