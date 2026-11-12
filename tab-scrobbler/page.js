@@ -12,6 +12,8 @@
       ? 'siriusxm'
       : null;
   if (!site || window.top !== window) return;
+  // The page-wide hooks below are only justified inside the web player.
+  const siriusPlayer = site === 'siriusxm' && (/^player\./.test(host) || location.pathname.startsWith('/player'));
 
   const text = (v) => (typeof v === 'string' ? v : '');
 
@@ -179,11 +181,11 @@
     window.addEventListener('visibilitychange', swallow, true);
     document.addEventListener('visibilitychange', swallow, true);
   }
-  if (site === 'siriusxm') keepPageAwake();
+  if (siriusPlayer) keepPageAwake();
 
   let observing = false;
   function observeSirius() {
-    if (observing || !document.body) return;
+    if (observing || !document.body || !siriusPlayer) return;
     observing = true;
     const origPlay = HTMLMediaElement.prototype.play;
     HTMLMediaElement.prototype.play = function (...args) {

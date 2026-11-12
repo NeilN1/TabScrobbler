@@ -69,9 +69,12 @@ the application, never a user.
   settings). Lines that look like promos, social handles or phone numbers are skipped.
 - Paused time never counts. If Last.fm is unreachable, scrobbles wait in a queue and are retried every five minutes
   for up to two weeks.
-- The SiriusXM player stops refreshing its now-playing display while its tab is hidden, so on SiriusXM pages the
-  extension makes the page believe the tab is always visible (it reports `document.hidden` as false, keeps
-  `visibilitychange` from reaching the page, and runs animation-frame callbacks on a timer while hidden).
+- The SiriusXM player stops refreshing its now-playing display while its tab is hidden, so on the SiriusXM
+  player pages (and only there) the extension makes the page believe the tab is always visible: it reports
+  `document.hidden` as false, keeps `visibilitychange` from reaching the page, and runs animation-frame
+  callbacks on a timer while hidden.
+- The extension runs only on the web-player URLs listed in the manifest. What it reads, sends and stores is
+  spelled out in [PRIVACY.md](../PRIVACY.md).
 
 ## Known limits
 

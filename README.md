@@ -7,5 +7,7 @@ web players to Last.fm.
   [README](tab-scrobbler/README.md)
 - **[tests/](tests/)** — Node tests for the Last.fm signing and scrobble-timing logic (`node tests/run.js`)
 - **[sign.ps1](sign.ps1)** — signs a build with Mozilla for private installation
+- **[PRIVACY.md](PRIVACY.md)** — what the extension reads, sends and stores
+- **[listing.md](listing.md)** — draft text for an addons.mozilla.org listing
 
 MIT licensed.
