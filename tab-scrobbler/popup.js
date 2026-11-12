@@ -8,8 +8,8 @@
     'https://music.apple.com/*',
     'https://beta.music.apple.com/*',
     'https://classical.music.apple.com/*',
-    'https://www.siriusxm.com/player/*',
-    'https://www.siriusxm.ca/player/*',
+    'https://*.siriusxm.com/player/*',
+    'https://*.siriusxm.ca/player/*',
     'https://player.siriusxm.com/*',
     'https://player.siriusxm.ca/*',
   ];

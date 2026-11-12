@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Tab Scrobbler",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Scrobbles tracks played in the SiriusXM and Apple Music web players to Last.fm. Source: github.com/NeilN1/TabScrobbler",
   "homepage_url": "https://github.com/NeilN1/TabScrobbler",
   "icons": {
@@ -14,8 +14,8 @@
     "https://music.apple.com/*",
     "https://beta.music.apple.com/*",
     "https://classical.music.apple.com/*",
-    "https://www.siriusxm.com/player/*",
-    "https://www.siriusxm.ca/player/*",
+    "https://*.siriusxm.com/player/*",
+    "https://*.siriusxm.ca/player/*",
     "https://player.siriusxm.com/*",
     "https://player.siriusxm.ca/*"
   ],
@@ -41,8 +41,8 @@
         "https://music.apple.com/*",
         "https://beta.music.apple.com/*",
         "https://classical.music.apple.com/*",
-        "https://www.siriusxm.com/player/*",
-        "https://www.siriusxm.ca/player/*",
+        "https://*.siriusxm.com/player/*",
+        "https://*.siriusxm.ca/player/*",
         "https://player.siriusxm.com/*",
         "https://player.siriusxm.ca/*"
       ],
@@ -55,8 +55,8 @@
         "https://music.apple.com/*",
         "https://beta.music.apple.com/*",
         "https://classical.music.apple.com/*",
-        "https://www.siriusxm.com/player/*",
-        "https://www.siriusxm.ca/player/*",
+        "https://*.siriusxm.com/player/*",
+        "https://*.siriusxm.ca/player/*",
         "https://player.siriusxm.com/*",
         "https://player.siriusxm.ca/*"
       ],
