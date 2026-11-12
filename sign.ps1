@@ -18,7 +18,13 @@
 #>
 [CmdletBinding()]
 param(
-    [string]$CredentialFile = "$env:USERPROFILE\.web-ext-amo.xml"
+    [string]$CredentialFile = "$env:USERPROFILE\.web-ext-amo.xml",
+    # 'unlisted' signs for private installation; 'listed' submits the version
+    # for public review on addons.mozilla.org (no .xpi comes back until approved).
+    [ValidateSet('unlisted', 'listed')]
+    [string]$Channel = 'unlisted',
+    # Listing text for the AMO API, used with -Channel listed.
+    [string]$Metadata = ''
 )
 
 $ErrorActionPreference = 'Stop'
@@ -29,7 +35,13 @@ if (-not (Test-Path $CredentialFile)) {
 
 $cred = Import-Clixml $CredentialFile
 $manifest = Get-Content (Join-Path $PSScriptRoot 'tab-scrobbler\manifest.json') -Raw | ConvertFrom-Json
-Write-Host "Signing Tab Scrobbler $($manifest.version) as unlisted..."
+Write-Host "Signing Tab Scrobbler $($manifest.version) as $Channel..."
+
+$extra = @()
+if ($Metadata) {
+    $Metadata = (Resolve-Path $Metadata).Path
+    $extra += "--amo-metadata=$Metadata"
+}
 
 $env:WEB_EXT_API_KEY = $cred.UserName
 $env:WEB_EXT_API_SECRET = $cred.GetNetworkCredential().Password
@@ -37,7 +49,7 @@ try {
     Push-Location (Join-Path $PSScriptRoot 'tab-scrobbler')
     # Pinned: this process holds the signing secret, so run a known release
     # rather than whatever npm serves today. Bump deliberately.
-    npx --yes web-ext@10.8.0 sign --channel=unlisted
+    npx --yes web-ext@10.8.0 sign "--channel=$Channel" @extra
     if ($LASTEXITCODE -ne 0) { throw "web-ext sign exited with code $LASTEXITCODE" }
 }
 finally {
