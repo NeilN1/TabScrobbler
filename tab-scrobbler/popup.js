@@ -134,6 +134,7 @@
   }
 
   $('enabled').addEventListener('change', (e) => api.storage.local.set({ enabled: e.target.checked }));
+  $('version').textContent = 'v' + api.runtime.getManifest().version;
 
   render();
   setInterval(render, 1000);

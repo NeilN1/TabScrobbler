@@ -79,5 +79,6 @@
     store.set({ unknownSeconds: n });
   });
 
+  $('version').textContent = 'v' + api.runtime.getManifest().version;
   render();
 })();
