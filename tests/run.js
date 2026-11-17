@@ -251,5 +251,59 @@ const radio = (over) => ({ site: 'siriusxm', artist: 'Wilco', title: 'Jesus, Etc
     assert.ok(h.tracker.state().playedSeconds < 90);
   });
 
+  await test('toolbar icon is purple only while a tab is playing and scrobbling is possible', async () => {
+    const area = () => {
+      const data = {};
+      return {
+        data,
+        get: async (keys) => Object.fromEntries(keys.filter((k) => k in data).map((k) => [k, data[k]])),
+        set: async (o) => void Object.assign(data, JSON.parse(JSON.stringify(o))),
+        remove: async (keys) => void [].concat(keys).forEach((k) => delete data[k]),
+      };
+    };
+    const listeners = {};
+    const on = (name) => ({ addListener: (fn) => (listeners[name] = fn) });
+    const icons = [];
+    const local = area();
+    local.data.sessionKey = 'sk';
+    globalThis.chrome = {
+      storage: { local, session: area(), onChanged: on('storageChanged') },
+      runtime: { onMessage: on('message'), onInstalled: on('installed'), onStartup: on('startup'), openOptionsPage() {} },
+      alarms: { onAlarm: on('alarm'), create() {}, clear() {} },
+      tabs: { onRemoved: on('tabRemoved') },
+      action: { setIcon: async ({ path }) => void icons.push(/grey/.test(path[48]) ? 'grey' : 'purple'), setTitle: async () => {} },
+    };
+    globalThis.TabScrobblerConfig = { apiKey: 'k'.repeat(32), apiSecret: 's'.repeat(32) };
+    require(path.join(ext, 'background.js'));
+
+    const settle = () => new Promise((r) => setTimeout(r, 20));
+    const status = (tabId, playing) =>
+      new Promise((resolve) => listeners.message({ type: 'status', playing }, { tab: { id: tabId } }, resolve));
+    const last = () => icons[icons.length - 1];
+
+    await settle();
+    assert.equal(last(), 'grey', 'nothing playing at start');
+    await status(1, true);
+    assert.equal(last(), 'purple', 'a tab started playing');
+    await status(2, true);
+    await status(1, false);
+    assert.equal(last(), 'purple', 'another tab is still playing');
+    listeners.tabRemoved(2);
+    await settle();
+    assert.equal(last(), 'grey', 'the playing tab was closed');
+
+    await status(1, true);
+    assert.equal(last(), 'purple');
+    local.data.enabled = false;
+    listeners.storageChanged({ enabled: {} }, 'local');
+    await settle();
+    assert.equal(last(), 'grey', 'scrobbling switched off while playing');
+    local.data.enabled = true;
+    delete local.data.sessionKey;
+    listeners.storageChanged({ sessionKey: {} }, 'local');
+    await settle();
+    assert.equal(last(), 'grey', 'playing but not connected');
+  });
+
   console.log('\n' + passed + ' passed' + (process.exitCode ? ', with failures' : ''));
 })();

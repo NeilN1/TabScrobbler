@@ -38,6 +38,25 @@
     lastSnapAt = Date.now();
     lastClean = cleanSnapshot(lastSnap);
     tracker.update(lastClean, Date.now());
+    reportStatus();
+  });
+
+  // Tell the background script whether this tab is playing a song right now,
+  // so the toolbar icon can show it. Sent only when the answer changes.
+  let reportedPlaying = false;
+  function reportStatus() {
+    const fresh = Date.now() - lastSnapAt < 10000;
+    const playing = Boolean(fresh && lastClean && lastClean.artist && lastClean.title && lastClean.playing);
+    if (playing === reportedPlaying) return;
+    reportedPlaying = playing;
+    send({ type: 'status', playing });
+  }
+  // Catches a page that stops reporting altogether.
+  setInterval(reportStatus, 5000);
+  // Leaving the page (or entering the back/forward cache) ends playback here.
+  window.addEventListener('pagehide', () => {
+    if (reportedPlaying) send({ type: 'status', playing: false });
+    reportedPlaying = false;
   });
 
   // The popup asks each player tab what it currently sees. The tracker keeps

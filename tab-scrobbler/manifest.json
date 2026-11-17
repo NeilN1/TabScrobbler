@@ -27,8 +27,8 @@
     "default_title": "Tab Scrobbler",
     "default_popup": "popup.html",
     "default_icon": {
-      "48": "icons/icon-48.png",
-      "128": "icons/icon-128.png"
+      "48": "icons/icon-48-grey.png",
+      "128": "icons/icon-128-grey.png"
     }
   },
   "options_ui": {

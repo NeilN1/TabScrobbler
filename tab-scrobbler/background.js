@@ -94,8 +94,14 @@ if (typeof importScripts === 'function') importScripts('config.js', 'md5.js', 'l
 
   let lastNowPlayingAt = 0;
 
-  async function handle(msg) {
+  async function handle(msg, sender) {
     if (!msg || typeof msg.type !== 'string') return null;
+
+    if (msg.type === 'status') {
+      const tabId = sender && sender.tab && sender.tab.id;
+      if (Number.isInteger(tabId)) await setTabPlaying(tabId, msg.playing === true);
+      return { ok: true };
+    }
 
     if (msg.type === 'flush') {
       await serial(flush);
@@ -133,13 +139,63 @@ if (typeof importScripts === 'function') importScripts('config.js', 'md5.js', 'l
 
   api.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     if (msg && msg.type === 'getState') return false; // answered by content scripts
-    handle(msg).then(sendResponse, (err) => sendResponse({ ok: false, error: String(err) }));
+    handle(msg, sender).then(sendResponse, (err) => sendResponse({ ok: false, error: String(err) }));
     return true;
   });
 
   api.alarms.onAlarm.addListener((alarm) => {
     if (alarm.name === 'flush') serial(flush);
   });
+
+  // Which player tabs are playing a song right now, as reported by their
+  // content scripts. Kept in session storage because this script is suspended
+  // between events; it empties itself when the browser restarts.
+  const session = api.storage.session;
+  let memoryTabs = {};
+  async function getPlayingTabs() {
+    if (!session) return memoryTabs;
+    const s = await session.get(['playingTabs']);
+    return s.playingTabs || {};
+  }
+  let iconChain = Promise.resolve();
+  function setTabPlaying(tabId, playing) {
+    const run = async () => {
+      const tabs = await getPlayingTabs();
+      if (Boolean(tabs[tabId]) === playing) return;
+      if (playing) tabs[tabId] = true;
+      else delete tabs[tabId];
+      if (session) await session.set({ playingTabs: tabs });
+      else memoryTabs = tabs;
+      await updateIcon();
+    };
+    iconChain = iconChain.then(run, run);
+    return iconChain;
+  }
+  api.tabs.onRemoved.addListener((tabId) => setTabPlaying(tabId, false));
+
+  // Toolbar icon: purple only while a track is playing and will be scrobbled;
+  // grey when nothing is playing, scrobbling is switched off, or no Last.fm
+  // account is connected. Grey is also the manifest's default icon.
+  async function updateIcon() {
+    const cfg = await getCfg();
+    const playing = Object.keys(await getPlayingTabs()).length > 0;
+    const active = cfg.enabled && cfg.connected && playing;
+    const suffix = active ? '' : '-grey';
+    const why = !cfg.enabled ? 'scrobbling is off' : !cfg.connected ? 'not connected to Last.fm' : 'nothing playing';
+    try {
+      await api.action.setIcon({ path: { 48: `icons/icon-48${suffix}.png`, 128: `icons/icon-128${suffix}.png` } });
+      await api.action.setTitle({ title: active ? 'Tab Scrobbler (scrobbling)' : `Tab Scrobbler (${why})` });
+    } catch (e) {
+      // Cosmetic only.
+    }
+  }
+  api.storage.onChanged.addListener((changes, area) => {
+    if (area === 'local' && (changes.enabled || changes.sessionKey)) updateIcon();
+  });
+  // The browser forgets a custom icon on restart; this runs on every start
+  // of the background script.
+  api.runtime.onStartup.addListener(updateIcon);
+  updateIcon();
 
   api.runtime.onInstalled.addListener((details) => {
     // Builds before 1.0.4 kept a user-supplied API key and secret in storage.
