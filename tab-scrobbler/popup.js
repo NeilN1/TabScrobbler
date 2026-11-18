@@ -12,8 +12,9 @@
     'https://*.siriusxm.ca/player/*',
     'https://player.siriusxm.com/*',
     'https://player.siriusxm.ca/*',
+    'https://*.accuradio.com/*',
   ];
-  const SITE_NAMES = { apple: 'Apple Music', siriusxm: 'SiriusXM' };
+  const SITE_NAMES = { apple: 'Apple Music', siriusxm: 'SiriusXM', accuradio: 'AccuRadio' };
 
   function el(tag, cls, text) {
     const node = document.createElement(tag);
@@ -50,7 +51,7 @@
     const box = $('players');
     box.replaceChildren();
     if (!states.length) {
-      box.append(el('div', 'small muted', 'No player found. Open SiriusXM or Apple Music in a tab (reload it if it was already open).'));
+      box.append(el('div', 'small muted', 'No player found. Open SiriusXM, Apple Music or AccuRadio in a tab (reload it if it was already open).'));
       return;
     }
     for (const s of states) {

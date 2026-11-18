@@ -10,7 +10,9 @@
     ? 'apple'
     : /(^|\.)siriusxm\.(com|ca)$/.test(host)
       ? 'siriusxm'
-      : null;
+      : /(^|\.)accuradio\.com$/.test(host)
+        ? 'accuradio'
+        : null;
   if (!site || window.top !== window) return;
   // The page-wide hooks below are only justified inside the web player.
   const siriusPlayer = site === 'siriusxm' && (/^player\./.test(host) || location.pathname.startsWith('/player'));
@@ -241,6 +243,47 @@
     return { playing, note: domText ? 'Not a song: ' + domText : 'Nothing detected', raw };
   }
 
+  // ---- AccuRadio: Media Session, with the player's own markup as fallback ---
+  // Every song is its own audio file, so the audio element gives a real
+  // length and position.
+
+  function shown(id) {
+    const el = document.getElementById(id);
+    return Boolean(el && getComputedStyle(el).display !== 'none');
+  }
+  function idText(id) {
+    const el = document.getElementById(id);
+    return el ? el.textContent.replace(/\s+/g, ' ').trim() : '';
+  }
+
+  function readAccu() {
+    const audios = [...document.querySelectorAll('#AccuPlayerH5, #preloadPlayer')];
+    if (!audios.length) return { note: 'Player not loaded yet' };
+    audios.forEach(remember);
+    const live = audios.find((a) => !a.paused && !a.ended && a.readyState > 2);
+    const playing = Boolean(live);
+    if (shown('playerAdMeta') || shown('playerAdArt')) return { playing: false, note: 'Advertisement' };
+
+    const ms = mediaSessionInfo();
+    const dom = { title: idText('songtitle'), artist: idText('songartist'), album: idText('songalbum') };
+    const src = ms.title && ms.artist ? ms : dom;
+    if (!src.title || !src.artist) return { playing, note: 'Nothing playing' };
+
+    const audio = live || audios[0];
+    return {
+      title: src.title,
+      artist: src.artist,
+      album: src.album,
+      duration: Number.isFinite(audio.duration) ? audio.duration : 0,
+      position: audio.currentTime,
+      playing,
+      source: src === ms ? 'media session' : 'player',
+      raw: { player: dom, mediaSession: ms },
+    };
+  }
+
+  const readers = { apple: readApple, siriusxm: readSirius, accuradio: readAccu };
+
   // Called by the timer and by player events; never more than once a second.
   let lastTickAt = 0;
   function tick() {
@@ -249,7 +292,7 @@
     lastTickAt = now;
     let snap;
     try {
-      snap = site === 'apple' ? readApple() : readSirius();
+      snap = readers[site]();
     } catch (e) {
       snap = { note: 'Read error: ' + e.message };
     }

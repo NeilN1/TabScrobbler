@@ -242,6 +242,17 @@ const radio = (over) => ({ site: 'siriusxm', artist: 'Wilco', title: 'Jesus, Etc
     assert.ok(h.tracker.state().playedSeconds < 50, 'got ' + h.tracker.state().playedSeconds);
   });
 
+  await test('AccuRadio: known length uses the half-track rule and is not junk-filtered', () => {
+    const accu = (over) => ({ site: 'accuradio', artist: 'Talking Heads', title: 'Psycho Killer', album: 'Talking Heads: 77', duration: 258, position: 0, playing: true, ...over });
+    const h = harness();
+    h.play(accu(), 128);
+    assert.equal(h.scrobbles().length, 0);
+    h.play(accu({ position: 128 }), 3);
+    assert.equal(h.scrobbles().length, 1);
+    assert.equal(h.scrobbles()[0].track.album, 'Talking Heads: 77');
+    assert.equal(cleanSnapshot(accu({ artist: 'Garbage', title: '#1 Crush @ Home' })).title, '#1 Crush @ Home');
+  });
+
   await test('a sleep/wake gap counts for at most about a minute', () => {
     const h = harness();
     h.play(song({ duration: 400 }), 10);

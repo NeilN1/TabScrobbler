@@ -1,6 +1,6 @@
 # Tab Scrobbler
 
-Scrobbles what you play in the SiriusXM and Apple Music web players to Last.fm.
+Scrobbles what you play in the SiriusXM, Apple Music and AccuRadio web players to Last.fm.
 The same folder loads in Firefox (140+) and in Chrome or Edge.
 
 Source: <https://github.com/NeilN1/TabScrobbler>
@@ -37,7 +37,7 @@ To run it from source instead: Firefox only keeps unsigned extensions until it r
 4. Open the `.xpi` it writes to `web-ext-artifacts/` in Firefox.
 
 If nothing is detected after installing, check `about:addons` → Tab Scrobbler → **Permissions** and make sure
-access to the Apple Music and SiriusXM sites is switched on.
+access to the Apple Music, SiriusXM and AccuRadio sites is switched on.
 
 ### Chrome or Edge
 
@@ -51,7 +51,7 @@ Chrome shows a harmless warning about the `browser_specific_settings` key, which
 The settings page opens on first install (later: toolbar icon → **Settings**). Click **Connect to Last.fm**,
 approve access in the tab that opens, and you're done.
 
-Reload any SiriusXM or Apple Music tab that was already open, then play something. The toolbar popup shows what
+Reload any SiriusXM, Apple Music or AccuRadio tab that was already open, then play something. The toolbar popup shows what
 each player tab is reporting, how close the current track is to being scrobbled, and the most recent scrobbles.
 
 ### Building from source
@@ -70,6 +70,9 @@ the application, never a user.
 - **SiriusXM** — reads the "Artist - Title" line in the player bar, falling back to the browser's Media Session
   metadata. SiriusXM gives no track length, so a track scrobbles after 60 seconds of listening (adjustable in
   settings). Lines that look like promos, social handles or phone numbers are skipped.
+- **AccuRadio** — reads the browser's Media Session metadata (falling back to the player's own title, artist
+  and album fields) and the audio element for length and play state. Tracks follow the same rule as Apple
+  Music: half the length or four minutes. Advertisements are not scrobbled.
 - Paused time never counts. If Last.fm is unreachable, scrobbles wait in a queue and are retried every five minutes
   for up to two weeks.
 - The SiriusXM player stops refreshing its now-playing display while its tab is hidden, so on the SiriusXM

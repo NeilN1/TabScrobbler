@@ -10,7 +10,11 @@
 
   // Decided here, not taken from the page's message, so a script on one site
   // cannot pose as the other to dodge its filtering.
-  const SITE = /(^|\.)music\.apple\.com$/.test(location.hostname) ? 'apple' : 'siriusxm';
+  const SITE = /(^|\.)music\.apple\.com$/.test(location.hostname)
+    ? 'apple'
+    : /(^|\.)accuradio\.com$/.test(location.hostname)
+      ? 'accuradio'
+      : 'siriusxm';
 
   let unknownSeconds = 60;
   let lastSnap = null;

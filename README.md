@@ -1,7 +1,7 @@
 # Tab Scrobbler
 
-A Firefox (and Chrome/Edge) extension that scrobbles what you play in the SiriusXM and Apple Music
-web players to Last.fm.
+A Firefox (and Chrome/Edge) extension that scrobbles what you play in the SiriusXM, Apple Music
+and AccuRadio web players to Last.fm.
 
 **Install for Firefox:** [Tab Scrobbler on addons.mozilla.org](https://addons.mozilla.org/en-US/firefox/addon/055f5b33a2434c7ea433/)
 
