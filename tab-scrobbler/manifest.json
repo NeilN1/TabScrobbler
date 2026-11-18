@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Tab Scrobbler",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "Scrobbles SiriusXM, Apple Music, AccuRadio, YouTube Music and Spotify web players to Last.fm. Source: github.com/NeilN1/TabScrobbler",
   "homepage_url": "https://github.com/NeilN1/TabScrobbler",
   "icons": {
