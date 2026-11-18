@@ -9,7 +9,10 @@ Source: <https://github.com/NeilN1/TabScrobbler>
 
 ### Firefox
 
-Firefox only keeps unsigned extensions until it restarts, so there are two routes.
+Install it from [addons.mozilla.org](https://addons.mozilla.org/en-US/firefox/addon/055f5b33a2434c7ea433/);
+updates then arrive automatically.
+
+To run it from source instead: Firefox only keeps unsigned extensions until it restarts, so there are two routes.
 
 **Try it now (lasts until Firefox closes)**
 
