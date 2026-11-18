@@ -262,6 +262,9 @@ const radio = (over) => ({ site: 'siriusxm', artist: 'Wilco', title: 'Jesus, Etc
     assert.ok(h.tracker.state().playedSeconds < 90);
   });
 
+  // The background script loads once; later tests reuse its mocked browser.
+  let bg = null;
+
   await test('toolbar icon is purple only while a tab is playing and scrobbling is possible', async () => {
     const area = () => {
       const data = {};
@@ -285,7 +288,9 @@ const radio = (over) => ({ site: 'siriusxm', artist: 'Wilco', title: 'Jesus, Etc
       action: { setIcon: async ({ path }) => void icons.push(/grey/.test(path[48]) ? 'grey' : 'purple'), setTitle: async () => {} },
     };
     globalThis.TabScrobblerConfig = { apiKey: 'k'.repeat(32), apiSecret: 's'.repeat(32) };
+    require(path.join(ext, 'sites.js'));
     require(path.join(ext, 'background.js'));
+    bg = { listeners, local };
 
     const settle = () => new Promise((r) => setTimeout(r, 20));
     const status = (tabId, playing) =>
@@ -314,6 +319,72 @@ const radio = (over) => ({ site: 'siriusxm', artist: 'Wilco', title: 'Jesus, Etc
     listeners.storageChanged({ sessionKey: {} }, 'local');
     await settle();
     assert.equal(last(), 'grey', 'playing but not connected');
+  });
+
+  await test('plays from a site that is switched off are not sent to Last.fm', async () => {
+    const { listeners, local } = bg;
+    let calls = 0;
+    globalThis.fetch = async () => {
+      calls++;
+      return { ok: true, status: 200, json: async () => ({ scrobbles: { '@attr': { accepted: 1, ignored: 0 }, scrobble: {} } }) };
+    };
+    Object.assign(local.data, { sessionKey: 'sk', enabled: true, recent: [], queue: [] });
+    const send = (msg) => new Promise((resolve) => listeners.message(msg, { tab: { id: 7 } }, resolve));
+    const track = { artist: 'Low', title: 'Lullaby', album: '', duration: 200 };
+    const timestamp = Math.floor(Date.now() / 1000);
+
+    // Nothing stored means every site is on, as after a fresh install.
+    delete local.data.disabledSites;
+    assert.equal((await send({ type: 'scrobble', track, timestamp, site: 'spotify' })).ok, true);
+    assert.equal(local.data.recent.length, 1);
+
+    local.data.disabledSites = ['spotify'];
+    calls = 0;
+    assert.equal((await send({ type: 'scrobble', track, timestamp, site: 'spotify' })).ok, false);
+    assert.equal((await send({ type: 'nowPlaying', track, site: 'spotify' })).ok, false);
+    assert.equal(calls, 0, 'no request for the switched-off site');
+    assert.equal(local.data.recent.length, 1);
+
+    assert.equal((await send({ type: 'scrobble', track, timestamp, site: 'apple' })).ok, true);
+    assert.equal(local.data.recent.length, 2);
+    assert.equal(local.data.recent[0].site, 'apple');
+  });
+
+  await test('switching a site off forgets the track in progress', () => {
+    const h = harness();
+    h.play(song(), 90);
+    h.tracker.reset();
+    assert.equal(h.tracker.state(), null);
+    h.play(song({ position: 90 }), 20);
+    assert.equal(h.scrobbles().length, 0, 'the 90 seconds before the reset do not count');
+  });
+
+  await test('site list matches the manifest, and missing access is reported per site', async () => {
+    const manifest = JSON.parse(require('node:fs').readFileSync(path.join(ext, 'manifest.json'), 'utf8'));
+    const origins = Object.values(globalThis.TabScrobblerSiteOrigins).flat().sort();
+    assert.deepEqual(origins, manifest.host_permissions.filter((h) => !h.includes('audioscrobbler')).sort());
+    for (const script of manifest.content_scripts) assert.deepEqual([...script.matches].sort(), origins);
+    assert.deepEqual(Object.keys(globalThis.TabScrobblerSiteOrigins), Object.keys(globalThis.TabScrobblerSites));
+
+    const Access = globalThis.TabScrobblerAccess;
+    const granted = new Set(globalThis.TabScrobblerSiteOrigins.apple.concat(globalThis.TabScrobblerSiteOrigins.siriusxm));
+    const api = { permissions: { contains: async ({ origins: o }) => o.every((x) => granted.has(x)) } };
+    assert.deepEqual(await Access.missing(api, []), ['accuradio', 'ytmusic', 'spotify']);
+    assert.deepEqual(await Access.missing(api, ['spotify']), ['accuradio', 'ytmusic'], 'switched-off sites need no access');
+    assert.equal(Access.names(['accuradio', 'ytmusic', 'spotify']), 'AccuRadio, YouTube Music and Spotify');
+    assert.equal(Access.names(['spotify']), 'Spotify');
+
+    // After an update that lacks access, the settings page is opened.
+    let opened = 0;
+    globalThis.chrome.runtime.openOptionsPage = () => opened++;
+    globalThis.chrome.permissions = api.permissions;
+    bg.listeners.installed({ reason: 'update' });
+    await new Promise((r) => setTimeout(r, 30));
+    assert.equal(opened, 1);
+    globalThis.chrome.permissions = { contains: async () => true };
+    bg.listeners.installed({ reason: 'update' });
+    await new Promise((r) => setTimeout(r, 30));
+    assert.equal(opened, 1, 'no page when every site has access');
   });
 
   console.log('\n' + passed + ' passed' + (process.exitCode ? ', with failures' : ''));

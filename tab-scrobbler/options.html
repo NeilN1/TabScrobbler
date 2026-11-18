@@ -22,6 +22,15 @@
     <span id="status" class="small"></span>
   </div>
 
+  <h2>Sites</h2>
+  <p class="small muted">Untick a site to stop scrobbling what you play there. Changes apply straight away.</p>
+  <div id="sites"></div>
+  <div id="access" hidden>
+    <p id="accessText" class="small bad"></p>
+    <button id="allow" class="primary">Allow access</button>
+  </div>
+  <p id="accessDone" class="small ok" hidden>Access allowed. Reload any player tab that is already open.</p>
+
   <h2>Radio and other tracks with no known length</h2>
   <label for="unknownSeconds">Scrobble after this many seconds of listening</label>
   <input type="number" id="unknownSeconds" class="narrow" min="30" max="240" step="5">
@@ -35,6 +44,7 @@
   </p>
 
   <script src="config.js"></script>
+  <script src="sites.js"></script>
   <script src="md5.js"></script>
   <script src="lastfm.js"></script>
   <script src="options.js"></script>

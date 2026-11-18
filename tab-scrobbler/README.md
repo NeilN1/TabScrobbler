@@ -36,8 +36,10 @@ To run it from source instead: Firefox only keeps unsigned extensions until it r
    line, where shell history keeps it.
 4. Open the `.xpi` it writes to `web-ext-artifacts/` in Firefox.
 
-If nothing is detected after installing, check `about:addons` → Tab Scrobbler → **Permissions** and make sure
-access to the Apple Music, SiriusXM, AccuRadio, YouTube Music and Spotify sites is switched on.
+Firefox decides which sites an extension may run on, and does not grant access to sites added in an update or
+to a temporarily loaded copy. Without access nothing is detected until you click the toolbar button on that
+tab. The popup and the settings page say when access is missing and offer an **Allow access** button; the same
+switches are under `about:addons` → Tab Scrobbler → **Permissions**. Reload any open player tab afterwards.
 
 ### Chrome or Edge
 
@@ -80,6 +82,8 @@ the application, never a user.
 - **Spotify** — reads the now-playing bar for the title, first listed artist, position and length, and the
   browser's Media Session metadata for the album. Same rule as Apple Music. Advertisements, podcasts and
   audiobooks are not scrobbled.
+- Every site is on after installing. The settings page has a checkbox per site to stop scrobbling what you
+  play there; the **Scrobbling on** switch in the popup turns everything off at once.
 - Paused time never counts. If Last.fm is unreachable, scrobbles wait in a queue and are retried every five minutes
   for up to two weeks.
 - The SiriusXM player stops refreshing its now-playing display while its tab is hidden, so on the SiriusXM
@@ -109,6 +113,7 @@ the application, never a user.
 | `background.js` | Sends now-playing and scrobbles to Last.fm; owns the retry queue |
 | `lastfm.js`, `md5.js` | Last.fm API client and the MD5 it needs for request signing |
 | `config.js` | The Last.fm application key and secret this build signs with |
+| `sites.js` | The list of supported sites, shared by the background script, popup and settings page |
 | `popup.*`, `options.*`, `ui.css` | Toolbar popup and settings page |
 
 Tests for the signing and timing logic live in `../tests/run.js` (`node tests/run.js` from the parent folder).

@@ -5,12 +5,13 @@
 
 // Chrome loads this file alone as a service worker; Firefox loads md5.js and
 // lastfm.js first through the manifest's background.scripts list.
-if (typeof importScripts === 'function') importScripts('config.js', 'md5.js', 'lastfm.js');
+if (typeof importScripts === 'function') importScripts('config.js', 'sites.js', 'md5.js', 'lastfm.js');
 
 (() => {
   const api = globalThis.browser ?? globalThis.chrome;
   const LastFm = globalThis.LastFm;
   const CONFIG = globalThis.TabScrobblerConfig || {};
+  const SITE_IDS = Object.keys(globalThis.TabScrobblerSites || {});
   const configured = Boolean(CONFIG.apiKey && CONFIG.apiSecret && !/PASTE_/.test(CONFIG.apiKey + CONFIG.apiSecret));
 
   const MAX_QUEUE = 500;
@@ -19,12 +20,13 @@ if (typeof importScripts === 'function') importScripts('config.js', 'md5.js', 'l
 
   // The application key ships in config.js; only the user's session is stored.
   async function getCfg() {
-    const s = await api.storage.local.get(['sessionKey', 'enabled']);
+    const s = await api.storage.local.get(['sessionKey', 'enabled', 'disabledSites']);
     return {
       apiKey: CONFIG.apiKey,
       apiSecret: CONFIG.apiSecret,
       sessionKey: s.sessionKey,
       enabled: s.enabled !== false,
+      disabledSites: Array.isArray(s.disabledSites) ? s.disabledSites : [],
       connected: configured && Boolean(s.sessionKey),
     };
   }
@@ -110,6 +112,10 @@ if (typeof importScripts === 'function') importScripts('config.js', 'md5.js', 'l
 
     const cfg = await getCfg();
     if (!cfg.enabled) return { ok: false };
+    // The content script already stays quiet for a site that is switched
+    // off; this covers a tab that has not picked the setting up yet.
+    const site = SITE_IDS.includes(msg.site) ? msg.site : 'siriusxm';
+    if (cfg.disabledSites.includes(site)) return { ok: false };
     const track = validTrack(msg.track);
     if (!track) return { ok: false };
 
@@ -129,7 +135,7 @@ if (typeof importScripts === 'function') importScripts('config.js', 'md5.js', 'l
 
     if (msg.type === 'scrobble') {
       const timestamp = Number.isInteger(msg.timestamp) ? msg.timestamp : Math.floor(Date.now() / 1000);
-      await serial(() => enqueue({ track, timestamp, site: ['apple', 'accuradio', 'ytmusic', 'spotify'].includes(msg.site) ? msg.site : 'siriusxm' }));
+      await serial(() => enqueue({ track, timestamp, site }));
       await serial(flush);
       return { ok: true };
     }
@@ -200,6 +206,18 @@ if (typeof importScripts === 'function') importScripts('config.js', 'md5.js', 'l
   api.runtime.onInstalled.addListener((details) => {
     // Builds before 1.0.4 kept a user-supplied API key and secret in storage.
     api.storage.local.remove(['apiKey', 'apiSecret']);
-    if (details.reason === 'install') api.runtime.openOptionsPage();
+    if (details.reason === 'install') {
+      api.runtime.openOptionsPage();
+    } else if (details.reason === 'update') {
+      // Firefox does not grant access to sites added in an update, and says
+      // nothing about it. Open the settings page, which offers to allow them.
+      const access = globalThis.TabScrobblerAccess;
+      getCfg()
+        .then((cfg) => (access ? access.missing(api, cfg.disabledSites) : []))
+        .then((missing) => {
+          if (missing.length) api.runtime.openOptionsPage();
+        })
+        .catch(() => {});
+    }
   });
 })();

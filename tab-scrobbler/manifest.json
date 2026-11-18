@@ -23,7 +23,7 @@
     "https://open.spotify.com/*"
   ],
   "background": {
-    "scripts": ["config.js", "md5.js", "lastfm.js", "background.js"],
+    "scripts": ["config.js", "sites.js", "md5.js", "lastfm.js", "background.js"],
     "service_worker": "background.js"
   },
   "action": {

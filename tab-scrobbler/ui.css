@@ -91,3 +91,4 @@ ol { padding-left: 20px; }
 ol li { margin-bottom: 6px; }
 .actions { display: flex; gap: 8px; align-items: center; margin-top: 14px; flex-wrap: wrap; }
 .narrow { max-width: 120px; }
+label.site { font-weight: 400; margin: 4px 0; }

@@ -131,6 +131,11 @@
       if (snap.position !== null) c.lastPosition = snap.position;
     }
 
+    // Forget the current track, so listening while switched off never counts.
+    reset() {
+      this.cur = null;
+    }
+
     // Summary for the popup.
     state() {
       const c = this.cur;

@@ -21,6 +21,7 @@
           : 'siriusxm';
 
   let unknownSeconds = 60;
+  let siteOff = false; // scrobbling switched off for this site in the settings
   let lastSnap = null;
   let lastClean = null;
   let lastSnapAt = 0;
@@ -35,7 +36,7 @@
   }
 
   const tracker = new Tracker({
-    onNowPlaying: (track) => send({ type: 'nowPlaying', track }),
+    onNowPlaying: (track) => send({ type: 'nowPlaying', track, site: SITE }),
     onScrobble: (track, timestamp) => send({ type: 'scrobble', track, timestamp, site: SITE }),
     unknownSeconds: () => unknownSeconds,
   });
@@ -45,7 +46,7 @@
     lastSnap = e.data.snap && typeof e.data.snap === 'object' ? { ...e.data.snap, site: SITE } : null;
     lastSnapAt = Date.now();
     lastClean = cleanSnapshot(lastSnap);
-    tracker.update(lastClean, Date.now());
+    if (!siteOff) tracker.update(lastClean, Date.now());
     reportStatus();
   });
 
@@ -54,7 +55,7 @@
   let reportedPlaying = false;
   function reportStatus() {
     const fresh = Date.now() - lastSnapAt < 10000;
-    const playing = Boolean(fresh && lastClean && lastClean.artist && lastClean.title && lastClean.playing);
+    const playing = Boolean(!siteOff && fresh && lastClean && lastClean.artist && lastClean.title && lastClean.playing);
     if (playing === reportedPlaying) return;
     reportedPlaying = playing;
     send({ type: 'status', playing });
@@ -75,18 +76,30 @@
       sendResponse({
         site: SITE,
         raw: lastSnap,
-        state: isSong ? tracker.state() : null,
+        siteOff,
+        state: isSong && !siteOff ? tracker.state() : null,
         staleSeconds: lastSnapAt ? Math.round((Date.now() - lastSnapAt) / 1000) : null,
       });
     }
   });
 
   function applySettings(s) {
-    const n = Number(s.unknownSeconds);
-    if (Number.isFinite(n) && n > 0) unknownSeconds = n;
+    if ('unknownSeconds' in s) {
+      const n = Number(s.unknownSeconds);
+      if (Number.isFinite(n) && n > 0) unknownSeconds = n;
+    }
+    if ('disabledSites' in s) {
+      siteOff = Array.isArray(s.disabledSites) && s.disabledSites.includes(SITE);
+      if (siteOff) tracker.reset();
+      reportStatus();
+    }
   }
-  api.storage.local.get(['unknownSeconds']).then(applySettings, () => {});
+  api.storage.local.get(['unknownSeconds', 'disabledSites']).then(applySettings, () => {});
   api.storage.onChanged.addListener((changes, area) => {
-    if (area === 'local' && changes.unknownSeconds) applySettings({ unknownSeconds: changes.unknownSeconds.newValue });
+    if (area !== 'local') return;
+    const changed = {};
+    if (changes.unknownSeconds) changed.unknownSeconds = changes.unknownSeconds.newValue;
+    if (changes.disabledSites) changed.disabledSites = changes.disabledSites.newValue;
+    applySettings(changed);
   });
 })();

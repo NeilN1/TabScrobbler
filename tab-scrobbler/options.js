@@ -8,6 +8,8 @@
   const store = api.storage.local;
   const $ = (id) => document.getElementById(id);
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const Access = globalThis.TabScrobblerAccess;
+  let missingSites = [];
 
   function status(text, cls) {
     const node = $('status');
@@ -16,7 +18,16 @@
   }
 
   async function render() {
-    const s = await store.get(['sessionKey', 'username', 'unknownSeconds']);
+    const s = await store.get(['sessionKey', 'username', 'unknownSeconds', 'disabledSites']);
+    const off = Array.isArray(s.disabledSites) ? s.disabledSites : [];
+    for (const box of document.querySelectorAll('#sites input')) box.checked = !off.includes(box.value);
+
+    // Sites the browser has not let the extension run on (see sites.js).
+    missingSites = await Access.missing(api, off);
+    $('access').hidden = !missingSites.length;
+    $('accessText').textContent = missingSites.length
+      ? 'The browser has not given Tab Scrobbler access to ' + Access.names(missingSites) + ', so nothing is detected there.'
+      : '';
     const connected = Boolean(s.sessionKey);
     const account = $('account');
     if (!configured) {
@@ -78,6 +89,39 @@
     e.target.value = n;
     store.set({ unknownSeconds: n });
   });
+
+  // One checkbox per supported site; only the sites switched off are stored,
+  // so every site is on after installing and a site added later starts on.
+  for (const [id, name] of Object.entries(globalThis.TabScrobblerSites || {})) {
+    const label = document.createElement('label');
+    label.className = 'site';
+    const box = document.createElement('input');
+    box.type = 'checkbox';
+    box.value = id;
+    box.checked = true;
+    box.addEventListener('change', () => {
+      const off = [...document.querySelectorAll('#sites input')].filter((b) => !b.checked).map((b) => b.value);
+      store.set({ disabledSites: off });
+    });
+    label.append(box, ' ' + name);
+    $('sites').append(label);
+  }
+
+  $('allow').addEventListener('click', () => {
+    Access.request(api, missingSites).then(
+      (granted) => {
+        $('accessDone').hidden = !granted;
+        render();
+      },
+      (err) => status(String(err && err.message ? err.message : err), 'bad')
+    );
+  });
+  // Keep the page honest if access changes in the browser's own settings.
+  if (api.permissions && api.permissions.onAdded) {
+    api.permissions.onAdded.addListener(render);
+    api.permissions.onRemoved.addListener(render);
+  }
+  store.onChanged && store.onChanged.addListener(render);
 
   $('version').textContent = 'v' + api.runtime.getManifest().version;
   render();

@@ -4,19 +4,41 @@
   const api = globalThis.browser ?? globalThis.chrome;
   const $ = (id) => document.getElementById(id);
 
-  const PLAYER_URLS = [
-    'https://music.apple.com/*',
-    'https://beta.music.apple.com/*',
-    'https://classical.music.apple.com/*',
-    'https://*.siriusxm.com/player/*',
-    'https://*.siriusxm.ca/player/*',
-    'https://player.siriusxm.com/*',
-    'https://player.siriusxm.ca/*',
-    'https://*.accuradio.com/*',
-    'https://music.youtube.com/*',
-    'https://open.spotify.com/*',
-  ];
-  const SITE_NAMES = { apple: 'Apple Music', siriusxm: 'SiriusXM', accuradio: 'AccuRadio', ytmusic: 'YouTube Music', spotify: 'Spotify' };
+  const PLAYER_URLS = Object.values(globalThis.TabScrobblerSiteOrigins || {}).flat();
+  const SITE_NAMES = globalThis.TabScrobblerSites || {};
+  const Access = globalThis.TabScrobblerAccess;
+
+  // Sites the browser has not let the extension run on. Without access its
+  // scripts never start there, so nothing is detected until the user allows it.
+  let missingSites = [];
+  let accessNote = '';
+  function renderAccess() {
+    const box = $('access');
+    const key = missingSites.join(',') + '|' + accessNote;
+    if (box.dataset.key === key) return; // leave the button alone between refreshes
+    box.dataset.key = key;
+    box.replaceChildren();
+    box.hidden = !missingSites.length && !accessNote;
+    if (missingSites.length) {
+      box.append(
+        el('div', 'small bad', 'The browser has not given Tab Scrobbler access to ' + Access.names(missingSites) + ', so nothing is detected there.')
+      );
+      const button = el('button', 'primary', 'Allow access');
+      button.style.marginTop = '6px';
+      button.addEventListener('click', () => {
+        Access.request(api, missingSites).then(
+          (granted) => {
+            accessNote = granted ? 'Access allowed. Reload any player tab that is already open.' : '';
+            render();
+          },
+          () => api.runtime.openOptionsPage()
+        );
+      });
+      box.append(button);
+    } else if (accessNote) {
+      box.append(el('div', 'small ok', accessNote));
+    }
+  }
 
   function el(tag, cls, text) {
     const node = document.createElement(tag);
@@ -61,7 +83,9 @@
       const st = s.state;
       card.append(el('div', 'small muted', SITE_NAMES[s.site] || s.site));
       const raw = s.raw || {};
-      if (st && st.track) {
+      if (s.siteOff) {
+        card.append(el('div', 'small', 'Scrobbling is switched off for this site (see Settings).'));
+      } else if (st && st.track) {
         card.append(el('div', 'title', st.track.title));
         card.append(el('div', 'small', st.track.album ? st.track.artist + ' · ' + st.track.album : st.track.artist));
         let line;
@@ -110,8 +134,10 @@
   }
 
   async function render() {
-    const s = await api.storage.local.get(['sessionKey', 'username', 'enabled', 'queue', 'recent', 'lastError']);
+    const s = await api.storage.local.get(['sessionKey', 'username', 'enabled', 'queue', 'recent', 'lastError', 'disabledSites']);
     $('enabled').checked = s.enabled !== false;
+    missingSites = await Access.missing(api, Array.isArray(s.disabledSites) ? s.disabledSites : []);
+    renderAccess();
 
     const account = $('account');
     account.replaceChildren();
