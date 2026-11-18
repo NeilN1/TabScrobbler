@@ -38,6 +38,11 @@ $manifest = Get-Content (Join-Path $PSScriptRoot 'tab-scrobbler\manifest.json') 
 Write-Host "Signing Tab Scrobbler $($manifest.version) as $Channel..."
 
 $extra = @()
+if ($Channel -eq 'listed') {
+    # Public versions wait for Mozilla's human review, which takes days; return
+    # as soon as the upload is accepted instead of polling for the signed file.
+    $extra += '--approval-timeout=0'
+}
 if ($Metadata) {
     $Metadata = (Resolve-Path $Metadata).Path
     $extra += "--amo-metadata=$Metadata"
