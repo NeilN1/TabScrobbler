@@ -14,7 +14,9 @@
         ? 'accuradio'
         : host === 'music.youtube.com'
           ? 'ytmusic'
-          : null;
+          : host === 'open.spotify.com'
+            ? 'spotify'
+            : null;
   if (!site || window.top !== window) return;
   // The page-wide hooks below are only justified inside the web player.
   const siriusPlayer = site === 'siriusxm' && (/^player\./.test(host) || location.pathname.startsWith('/player'));
@@ -327,7 +329,104 @@
     };
   }
 
-  const readers = { apple: readApple, siriusxm: readSirius, accuradio: readAccu, ytmusic: readYtm };
+  // ---- Spotify: the now-playing bar, with Media Session for the album -------
+  // The bar's data-testid attributes are the stable handles; class names are
+  // generated. Advertisements and podcasts are told apart by what the bar
+  // links to.
+
+  // "3:07" or "1:02:45" in seconds; a leading minus means time remaining.
+  function clock(s) {
+    const m = /^(-?)\s*(?:(\d+):)?(\d+):(\d{2})$/.exec(s.trim());
+    if (!m) return null;
+    const seconds = Number(m[2] || 0) * 3600 + Number(m[3]) * 60 + Number(m[4]);
+    return m[1] ? -seconds : seconds;
+  }
+
+  let spotifyBar = null;
+  let lastPosition = null;
+  let positionMovedAt = 0;
+
+  function readSpotify() {
+    const bar = document.querySelector('[data-testid="now-playing-bar"]');
+    if (!bar) return { note: 'Player not loaded yet' };
+    if (bar !== spotifyBar) {
+      // The position text changes every second while playing; use that as a
+      // clock that still runs when timers are throttled.
+      spotifyBar = bar;
+      new MutationObserver(() => tick()).observe(bar, { subtree: true, childList: true, characterData: true });
+    }
+    const pick = (...ids) => {
+      for (const id of ids) {
+        const el = bar.querySelector(`[data-testid="${id}"]`);
+        if (el) return el;
+      }
+      return null;
+    };
+    const elText = (el) => (el ? el.textContent.replace(/\s+/g, ' ').trim() : '');
+
+    const ms = mediaSessionInfo();
+    const posEl = pick('playback-position');
+    const durEl = pick('playback-duration');
+    const position = posEl ? clock(posEl.textContent) : null;
+    let duration = durEl ? clock(durEl.textContent) : null;
+    if (duration !== null && duration < 0) duration = position !== null ? position - duration : null;
+
+    const now = Date.now();
+    if (position !== lastPosition) {
+      if (lastPosition !== null) positionMovedAt = now;
+      lastPosition = position;
+    }
+    const playing =
+      ms.state === 'playing' || ms.state === 'paused' ? ms.state === 'playing' : now - positionMovedAt < 3000;
+
+    if (pick('context-item-info-ad-title', 'context-item-info-ad-subtitle', 'ad-link', 'ad-controls')) {
+      return { playing: false, note: 'Advertisement' };
+    }
+    // Current markup first (now-playing-widget-v2), then the older names.
+    const titleEl = pick('context-item-link', 'context-item-info-title', 'track-info-name');
+    const byline = pick('now-playing-widget-v2-byline', 'context-item-info-subtitles');
+    // The first listed artist, which is how Spotify itself reports plays. The
+    // Media Session joins several artists into one string, so it is the last
+    // resort.
+    const artistEl =
+      (byline && byline.querySelector('a[href*="/artist/"]')) || pick('context-item-info-artist', 'track-info-artists');
+    // The Media Session title is the dependable one; the bar is only trusted
+    // for the artist when it agrees with the Media Session's artist list.
+    const title = ms.title || elText(titleEl);
+    const first = elText(artistEl);
+    const artist = ms.artist
+      ? first && ms.artist.startsWith(first)
+        ? first
+        : ms.artist
+      : first || elText(byline);
+    if (!title || !artist) return { playing, note: 'Nothing playing' };
+
+    const hrefOf = (el) => {
+      const a = el && el.closest('a');
+      return (a && a.getAttribute('href')) || '';
+    };
+    const href = hrefOf(artistEl);
+    const links = [titleEl, ...(byline ? byline.querySelectorAll('a') : [])].map(hrefOf);
+    if (links.some((h) => /\/(show|episode|audiobook|chapter)\//.test(h))) {
+      return { playing, note: 'Podcasts and audiobooks are not scrobbled' };
+    }
+    if (/^advertisement$/i.test(artist) || /^advertisement$/i.test(title)) {
+      return { playing: false, note: 'Advertisement' };
+    }
+
+    return {
+      title,
+      artist,
+      album: ms.title === title ? ms.album : '',
+      duration: duration || 0,
+      position,
+      playing,
+      source: ms.title ? 'media session' : 'now-playing bar',
+      raw: { bar: { title: elText(titleEl), artist: first, artistLink: href }, mediaSession: ms },
+    };
+  }
+
+  const readers = { apple: readApple, siriusxm: readSirius, accuradio: readAccu, ytmusic: readYtm, spotify: readSpotify };
 
   // Called by the timer and by player events; never more than once a second.
   let lastTickAt = 0;

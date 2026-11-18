@@ -16,7 +16,9 @@
       ? 'accuradio'
       : location.hostname === 'music.youtube.com'
         ? 'ytmusic'
-        : 'siriusxm';
+        : location.hostname === 'open.spotify.com'
+          ? 'spotify'
+          : 'siriusxm';
 
   let unknownSeconds = 60;
   let lastSnap = null;

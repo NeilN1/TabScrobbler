@@ -129,7 +129,7 @@ if (typeof importScripts === 'function') importScripts('config.js', 'md5.js', 'l
 
     if (msg.type === 'scrobble') {
       const timestamp = Number.isInteger(msg.timestamp) ? msg.timestamp : Math.floor(Date.now() / 1000);
-      await serial(() => enqueue({ track, timestamp, site: ['apple', 'accuradio', 'ytmusic'].includes(msg.site) ? msg.site : 'siriusxm' }));
+      await serial(() => enqueue({ track, timestamp, site: ['apple', 'accuradio', 'ytmusic', 'spotify'].includes(msg.site) ? msg.site : 'siriusxm' }));
       await serial(flush);
       return { ok: true };
     }

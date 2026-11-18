@@ -1,6 +1,6 @@
 # Tab Scrobbler
 
-Scrobbles what you play in the SiriusXM, Apple Music, AccuRadio and YouTube Music web players to Last.fm.
+Scrobbles what you play in the SiriusXM, Apple Music, AccuRadio, YouTube Music and Spotify web players to Last.fm.
 The same folder loads in Firefox (140+) and in Chrome or Edge.
 
 Source: <https://github.com/NeilN1/TabScrobbler>
@@ -37,7 +37,7 @@ To run it from source instead: Firefox only keeps unsigned extensions until it r
 4. Open the `.xpi` it writes to `web-ext-artifacts/` in Firefox.
 
 If nothing is detected after installing, check `about:addons` → Tab Scrobbler → **Permissions** and make sure
-access to the Apple Music, SiriusXM, AccuRadio and YouTube Music sites is switched on.
+access to the Apple Music, SiriusXM, AccuRadio, YouTube Music and Spotify sites is switched on.
 
 ### Chrome or Edge
 
@@ -51,7 +51,7 @@ Chrome shows a harmless warning about the `browser_specific_settings` key, which
 The settings page opens on first install (later: toolbar icon → **Settings**). Click **Connect to Last.fm**,
 approve access in the tab that opens, and you're done.
 
-Reload any SiriusXM, Apple Music, AccuRadio or YouTube Music tab that was already open, then play something. The toolbar popup shows what
+Reload any SiriusXM, Apple Music, AccuRadio, YouTube Music or Spotify tab that was already open, then play something. The toolbar popup shows what
 each player tab is reporting, how close the current track is to being scrobbled, and the most recent scrobbles.
 
 ### Building from source
@@ -77,6 +77,9 @@ the application, never a user.
   and the player bar, with length, position and play state from the player. Same rule as Apple Music.
   Advertisements and live streams are not scrobbled; anything else played there counts, including music
   videos and podcasts.
+- **Spotify** — reads the now-playing bar for the title, first listed artist, position and length, and the
+  browser's Media Session metadata for the album. Same rule as Apple Music. Advertisements, podcasts and
+  audiobooks are not scrobbled.
 - Paused time never counts. If Last.fm is unreachable, scrobbles wait in a queue and are retried every five minutes
   for up to two weeks.
 - The SiriusXM player stops refreshing its now-playing display while its tab is hidden, so on the SiriusXM
@@ -88,6 +91,9 @@ the application, never a user.
 
 ## Known limits
 
+- Last.fm can also scrobble Spotify by itself (Last.fm → Settings → Applications → Spotify Scrobbling). With
+  that switched on, plays in the Spotify web player would be scrobbled twice; use one or the other. The same
+  applies if the web player is only controlling playback on another device that scrobbles.
 - SiriusXM talk, sports and podcast content shown as "Something - Something" will be scrobbled as if it were a
   song. Use the **Scrobbling on** switch in the popup when listening to those.
 - If SiriusXM changes its player markup, detection will stop. The popup's **What the page reports** section shows
