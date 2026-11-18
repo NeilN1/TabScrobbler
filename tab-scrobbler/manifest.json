@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Tab Scrobbler",
   "version": "1.0.9",
-  "description": "Scrobbles tracks played in the SiriusXM, Apple Music and AccuRadio web players to Last.fm. Source: github.com/NeilN1/TabScrobbler",
+  "description": "Scrobbles SiriusXM, Apple Music, AccuRadio and YouTube Music web players to Last.fm. Source: github.com/NeilN1/TabScrobbler",
   "homepage_url": "https://github.com/NeilN1/TabScrobbler",
   "icons": {
     "48": "icons/icon-48.png",
@@ -18,7 +18,8 @@
     "https://*.siriusxm.ca/player/*",
     "https://player.siriusxm.com/*",
     "https://player.siriusxm.ca/*",
-    "https://*.accuradio.com/*"
+    "https://*.accuradio.com/*",
+    "https://music.youtube.com/*"
   ],
   "background": {
     "scripts": ["config.js", "md5.js", "lastfm.js", "background.js"],
@@ -46,7 +47,8 @@
         "https://*.siriusxm.ca/player/*",
         "https://player.siriusxm.com/*",
         "https://player.siriusxm.ca/*",
-        "https://*.accuradio.com/*"
+        "https://*.accuradio.com/*",
+        "https://music.youtube.com/*"
       ],
       "js": ["page.js"],
       "run_at": "document_start",
@@ -61,7 +63,8 @@
         "https://*.siriusxm.ca/player/*",
         "https://player.siriusxm.com/*",
         "https://player.siriusxm.ca/*",
-        "https://*.accuradio.com/*"
+        "https://*.accuradio.com/*",
+        "https://music.youtube.com/*"
       ],
       "js": ["tracker.js", "content.js"],
       "run_at": "document_start"

@@ -14,7 +14,9 @@
     ? 'apple'
     : /(^|\.)accuradio\.com$/.test(location.hostname)
       ? 'accuradio'
-      : 'siriusxm';
+      : location.hostname === 'music.youtube.com'
+        ? 'ytmusic'
+        : 'siriusxm';
 
   let unknownSeconds = 60;
   let lastSnap = null;

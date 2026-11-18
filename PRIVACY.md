@@ -5,7 +5,7 @@ when you have connected a Last.fm account.
 
 ## What it reads
 
-On the SiriusXM, Apple Music and AccuRadio web players, the extension reads the name of the track currently
+On the SiriusXM, Apple Music, AccuRadio and YouTube Music web players, the extension reads the name of the track currently
 playing: artist, title, album (where shown), track length (where the player gives one) and whether playback is running.
 It reads nothing else from those pages and runs on no other sites.
 
@@ -33,7 +33,7 @@ at any time under Last.fm → Settings → Applications.
 
 ## Third parties
 
-Last.fm's handling of the data it receives is governed by Last.fm's own privacy policy. SiriusXM, Apple and AccuRadio
+Last.fm's handling of the data it receives is governed by Last.fm's own privacy policy. SiriusXM, Apple, AccuRadio and YouTube
 receive nothing from this extension.
 
 ## Contact

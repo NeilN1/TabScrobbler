@@ -12,7 +12,9 @@
       ? 'siriusxm'
       : /(^|\.)accuradio\.com$/.test(host)
         ? 'accuradio'
-        : null;
+        : host === 'music.youtube.com'
+          ? 'ytmusic'
+          : null;
   if (!site || window.top !== window) return;
   // The page-wide hooks below are only justified inside the web player.
   const siriusPlayer = site === 'siriusxm' && (/^player\./.test(host) || location.pathname.startsWith('/player'));
@@ -282,7 +284,50 @@
     };
   }
 
-  const readers = { apple: readApple, siriusxm: readSirius, accuradio: readAccu };
+  // ---- YouTube Music: Media Session, the player API, then the player bar ----
+  // During an advertisement the Media Session and the video element describe
+  // the ad, so the player's ad marker is checked first.
+
+  function readYtm() {
+    const mp = document.getElementById('movie_player');
+    const video = document.querySelector('video.html5-main-video') || document.querySelector('video');
+    if (!mp || !video) return { note: 'Player not loaded yet' };
+    remember(video);
+    const playing = !video.paused && !video.ended && video.readyState > 2;
+    if (mp.classList.contains('ad-showing') || mp.classList.contains('ad-interrupting')) {
+      return { playing: false, note: 'Advertisement' };
+    }
+
+    let data = {};
+    try {
+      data = (mp.getVideoData && mp.getVideoData()) || {};
+    } catch (e) {
+      // The player API is not ready yet; the other sources still work.
+    }
+    if (data.isLive) return { playing, note: 'Live streams are not scrobbled' };
+
+    const ms = mediaSessionInfo();
+    const bar = document.querySelector('ytmusic-player-bar');
+    const barTitle = bar && bar.querySelector('.title');
+    const barArtist = bar && bar.querySelector('.byline a');
+    const title = ms.title || text(data.title) || (barTitle ? barTitle.textContent.trim() : '');
+    const artist =
+      ms.artist || text(data.author).replace(/ - Topic$/, '') || (barArtist ? barArtist.textContent.trim() : '');
+    if (!title || !artist) return { playing, note: 'Nothing playing' };
+
+    const duration = mp.getDuration ? mp.getDuration() : video.duration;
+    return {
+      title,
+      artist,
+      album: ms.title === title ? ms.album : '',
+      duration: Number.isFinite(duration) ? duration : 0,
+      position: mp.getCurrentTime ? mp.getCurrentTime() : video.currentTime,
+      playing,
+      source: ms.title ? 'media session' : data.title ? 'player' : 'player bar',
+    };
+  }
+
+  const readers = { apple: readApple, siriusxm: readSirius, accuradio: readAccu, ytmusic: readYtm };
 
   // Called by the timer and by player events; never more than once a second.
   let lastTickAt = 0;
